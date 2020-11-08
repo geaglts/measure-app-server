@@ -10,10 +10,6 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
-    token: {
-        type: String,
-        default: "",
-    },
     clients: [
         {
             type: Schema.Types.ObjectId,
