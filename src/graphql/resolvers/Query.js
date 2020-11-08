@@ -1,35 +1,26 @@
-import { User } from "../../models/";
+import { User, Client, PhoneType, Phone } from "../../models/";
 
 export default {
-    /*  async getClients(parent, args, { currentuser }) {
+    async getClients(parent, args, { user }) {
         try {
-            if (!currentuser) throw new Error("No autorizado");
+            if (!user) throw new Error("No autorizado");
+            let userId = user._id;
+
+            const clients = User.find({ user: userId });
+
+            return clients;
         } catch (err) {
-            console.log(err);
-        }
-    }, */
-    /* getClients: async (obj, args, { currentuser }) => {
-        if (!currentuser) {
-            return {
-                message: "No autorizado",
-                loading: false,
-            };
-        }
-
-        try {
-            const clients = await Client.find({ user: userId });
-
-            return {
-                clients,
-                loading: false,
-            };
-        } catch (error) {
-            return {
-                message: "Verifique su informacion",
-                loading: false,
-            };
+            throw new Error(err);
         }
     },
+    async getPhoneTypes(parent, args, context) {
+        try {
+            return await PhoneType.find();
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
+    /*
     getPhones: async (obj, { clientId }, { currentuser }) => {
         try {
             if (!currentuser) {

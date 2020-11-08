@@ -1,77 +1,104 @@
-import { User } from "../../models/";
+import { User, Client, Phone } from "../../models/";
 import generateToken from "../../functions/generateToken";
 import * as auth from "../../functions/auth";
 import * as utils from "../../utils";
+import * as dbUtils from "../../db-utils";
 
 export default {
-    /*  addClient: async (obj, { input }, { currentuser }) => {
-        if (!currentuser) {
-            return {
-                message: "No autorizado",
-                loading: false,
-            };
-        }
-
+    async addClient(obj, { input }, { user }) {
         try {
-            const measures = { ...input.measures };
-            const phoneNumber = { ...input.phone };
+            if (!user) throw new Error("No autorizado");
+            const userId = user._id;
+            const validUser = await dbUtils.exists(["User"], {
+                _id: userId,
+            });
+            if (!validUser) throw new Error("Este usuario no existe");
 
-            const name = String(input.name.trim()).replace(/\b\w/g, (l) =>
-                l.toUpperCase()
-            );
+            const newInputs = utils.onlyValidateLengthAndTrimInputs(input);
+            const validInputs = utils.validateObject(newInputs);
 
-            const user = input.user.trim();
+            if (validInputs) {
+                const validPhoneType = await dbUtils.exists(["PhoneType"], {
+                    _id: newInputs.phone.phoneType,
+                });
 
-            input = { name, user, measures };
+                if (!validPhoneType)
+                    throw new Error("Este tipo de telefono no es valido");
 
-            if (name.length === 0 || user.length === 0) {
-                return {
-                    message: "no puede haber campos vacios",
-                    loading: false,
-                };
+                let clientExist = await Client.findOne({
+                    user: userId,
+                    name: newInputs.name,
+                });
+
+                if (clientExist)
+                    throw new Error("Ya cuenta con un cliente con ese nombre");
+
+                let client = new Client({
+                    name: newInputs.name,
+                    measures: newInputs.measures,
+                    user: userId,
+                });
+
+                let phone = new Phone({
+                    ...newInputs.phone,
+                    client: client._id,
+                });
+
+                await client.save();
+                await phone.save();
+
+                return { msg: "Cliente agregado correctamente" };
             }
 
-            const cliente = await Client.findOne({
-                name,
-                user,
-            });
+            throw new Error("Verifica los campos que mandas");
+            // const cliente = await Client.findOne({
+            //     name,
+            //     user,
+            // });
 
-            if (cliente) {
-                return {
-                    message: "Ya hay un cliente con ese nombre",
-                    success: false,
-                    loading: false,
-                };
-            }
+            // if (cliente) {
+            //     return {
+            //         message: "Ya hay un cliente con ese nombre",
+            //         success: false,
+            //         loading: false,
+            //     };
+            // }
 
-            const theUser = await User.findById(user);
-            const client = new Client({ ...input });
-            const phone = new Phone({
-                ...phoneNumber,
-                client: client._id,
-                isMain: true,
-            });
+            // const theUser = await User.findById(user);
+            // const client = new Client({ ...input });
+            // const phone = new Phone({
+            //     ...phoneNumber,
+            //     client: client._id,
+            //     isMain: true,
+            // });
 
-            await phone.save();
-            client.phones.push(phone);
-            await client.save();
-            theUser.clients.push(client);
-            await theUser.save();
+            // await phone.save();
+            // client.phones.push(phone);
+            // await client.save();
+            // theUser.clients.push(client);
+            // await theUser.save();
 
-            return {
-                message: "Cliente agregado con exito",
-                loading: false,
-                success: true,
-            };
+            // return {
+            //     message: "Cliente agregado con exito",
+            //     loading: false,
+            //     success: true,
+            // };
         } catch (err) {
-            console.log(err);
-            return {
-                message: "Verifique su informacion",
-                loading: false,
-                success: false,
-            };
+            throw new Error(err);
         }
     },
+    async addPhoneType(parent, { type }, context) {
+        try {
+            let validType = utils.validateAndTrimLowerInput(type);
+            if (!validType)
+                throw new Error("Ingrese un tipo de telefono valido");
+
+            return await dbUtils.newElement("PhoneType", { type });
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
+    /*
     removeClient: async (obj, { clientId }, { currentuser }) => {
         try {
             if (!currentuser) {
@@ -543,10 +570,12 @@ export default {
 
             if (!userExists) {
                 let passwordHash = await auth.hashPassword(password);
+
                 await User.create({
                     email,
                     password: passwordHash,
                 });
+
                 return {
                     msg: "Cuenta creada con exito",
                 };

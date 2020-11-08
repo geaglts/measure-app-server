@@ -68,27 +68,26 @@ export default gql`
     #     loading: Boolean!
     # }
 
-    # input clientInput {
-    #     name: String!
-    #     user: ID!
-    #     measures: measureInput!
-    #     phone: phoneInput!
-    # }
+    input clientInput {
+        name: String!
+        measures: measureInput
+        phone: phoneInput
+    }
 
     # input clientUpdateInput {
     #     name: String!
     # }
 
-    # input measureInput {
-    #     height: Int
-    #     waist: Int
-    # }
+    input measureInput {
+        height: Int!
+        waist: Int!
+    }
 
-    # input phoneInput {
-    #     phone: String!
-    #     phoneType: ID!
-    #     client: ID
-    # }
+    input phoneInput {
+        phone: String!
+        phoneType: ID!
+        client: ID
+    }
 
     input userInput {
         email: String!
@@ -96,17 +95,17 @@ export default gql`
     }
 
     type Query {
-        #     getClients(userId: ID!): [Client]!
+        getClients: [Client]
+
+        getPhoneTypes: [PhoneType]
         #     getPhones(clientId: ID!): Phones!
         #     getMainPhone(clientId: ID!): MainPhone!
-
-        #     getPhoneTypes: StatusTypes
 
         me: User
     }
 
     type Mutation {
-        #     addClient(input: clientInput!): Status!
+        addClient(input: clientInput!): JSON
         #     removeClient(clientId: ID!): Status!
         #     updateClient(clientId: ID!, newData: clientUpdateInput!): Status!
 
@@ -118,7 +117,7 @@ export default gql`
         #     eliminarTelefono(telefonoId: ID!, clienteId: ID!): Status!
         #     actualizarTelefono(datos: phoneInput!, telefonoId: ID!): Status!
 
-        #     newPhoneType(type: String!): Status
+        addPhoneType(type: String!): PhoneType
         #     updatePhoneType(id: ID!, type: String!): Status
         #     deletePhoneType(id: ID!): Status
 
