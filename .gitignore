@@ -119,3 +119,7 @@ package-lock.json
 package-lock.json.*
 package.json.*
 .idea
+
+.my-data
+.todo
+readme.todo

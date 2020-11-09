@@ -7,7 +7,7 @@ export default gql`
         id: ID!
         name: String!
         user: User
-
+        mainPhone: Phone
         measures: [Measure]
         phones: [Phone]
     }
@@ -16,6 +16,7 @@ export default gql`
         id: ID!
         height: Int!
         waist: Int!
+        creadoEl: String!
     }
 
     type Phone {
@@ -98,8 +99,6 @@ export default gql`
         getClients: [Client]
 
         getPhoneTypes: [PhoneType]
-        #     getPhones(clientId: ID!): Phones!
-        #     getMainPhone(clientId: ID!): MainPhone!
 
         me: User
     }
@@ -113,13 +112,11 @@ export default gql`
         #     deleteMeasure(medidasId: ID!, clienteId: ID!): Status!
         #     updateMeasure(medidasId: ID!, clienteId: ID!, medidas: measureInput!): Status!
 
-        #     addPhone(phoneData: phoneInput!): Status!
-        #     eliminarTelefono(telefonoId: ID!, clienteId: ID!): Status!
-        #     actualizarTelefono(datos: phoneInput!, telefonoId: ID!): Status!
+        addPhone(phoneData: phoneInput!): Phone
+        updatePhone(phoneData: phoneInput!, phoneId: ID!): JSON
+        dropPhone(phoneId: ID!, clientId: ID!): JSON
 
         addPhoneType(type: String!): PhoneType
-        #     updatePhoneType(id: ID!, type: String!): Status
-        #     deletePhoneType(id: ID!): Status
 
         login(email: String!, password: String!): JSON
         register(input: userInput!): JSON

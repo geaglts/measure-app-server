@@ -9,12 +9,6 @@ const clientSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "User",
     },
-    phones: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "Phone",
-        },
-    ],
     measures: [
         {
             height: {
@@ -24,6 +18,9 @@ const clientSchema = new Schema({
             waist: {
                 type: Number,
                 default: 0,
+            },
+            creadoEl: {
+                type: Date,
             },
         },
     ],

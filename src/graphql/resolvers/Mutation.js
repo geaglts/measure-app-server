@@ -33,6 +33,9 @@ export default {
                 if (clientExist)
                     throw new Error("Ya cuenta con un cliente con ese nombre");
 
+                newInputs.measures["creadoEl"] = Date.now();
+                newInputs.phone["isMain"] = true;
+
                 let client = new Client({
                     name: newInputs.name,
                     measures: newInputs.measures,
@@ -320,54 +323,109 @@ export default {
             };
         }
     },
-    addPhone: async (obj, { phoneData }, { currentuser }) => {
-        if (!currentuser) {
-            return {
-                loading: false,
-            };
-        }
-
+    */
+    async addPhone(obj, { phoneData }, { user }) {
         try {
-            // Ver si el telefono ya existe
-            const telefonoRepetido = await Phone.findOne({
-                phone: phoneData.phone,
+            if (!user) throw new Error("No authotizado");
+            let newInputs = utils.onlyValidateLengthAndTrimInputs(phoneData);
+            let validInputs = utils.validateObject(newInputs);
+
+            if (!validInputs) throw new Error("Verifica tus campos");
+
+            const client = dbUtils.exists("Client", {
+                _id: newInputs.clients,
+                user: user._id,
+            });
+            if (!client)
+                throw new Error("El cliente no existe o no te pertenece");
+
+            const validPhoneType = dbUtils.exists("PhoneType", {
+                _id: newInputs.phoneType,
+            });
+            if (!validPhoneType)
+                throw new Error("Este no es un tipo de telefono valido");
+
+            const phoneExists = await dbUtils.exists("Phone", {
+                phone: newInputs.phone,
+            });
+            if (phoneExists) throw new Error("Este numero ya esta registrado");
+
+            await Phone.findOneAndUpdate(
+                { isMain: true },
+                { isMain: false },
+                { new: true }
+            );
+
+            const newPhone = new Phone({
+                isMain: true,
+                ...newInputs,
             });
 
-            if (telefonoRepetido)
-                return {
-                    error: "Este telefono ya esta registrado",
-                    success: false,
-                    loading: false,
-                };
+            await newPhone.save();
 
-            // Buscar el telefono principal
-            await Phone.findOneAndUpdate({ isMain: true }, { isMain: false });
-
-            const phone = new Phone({ ...phoneData, isMain: true });
-
-            //buscar al cliente
-            const client = await Client.findById(phoneData.client);
-            //agregarle en nuevo telefono
-            client.phones.push(phone._id);
-
-            //guarda el telefono
-            await phone.save();
-            //guarda al cliente
-            await client.save();
-
-            return {
-                message: "Movil guardado con exito",
-                loading: false,
-            };
+            return newPhone;
         } catch (err) {
-            console.log(err);
-
-            return {
-                message: "Estoy trabajando en eso",
-                loading: false,
-            };
+            throw new Error(err);
         }
     },
+    async updatePhone(parent, { phoneData, phoneId }, { user }) {
+        try {
+            if (!user) throw new Error("No autorizado");
+            let newInputs = utils.onlyValidateLengthAndTrimInputs(phoneData);
+            let validInputs = utils.validateObject(newInputs);
+
+            if (!validInputs) throw new Error("Verifica tus campos");
+
+            const validPhoneType = await dbUtils.exists("PhoneType", {
+                _id: newInputs.phoneType,
+            });
+            if (!validPhoneType)
+                throw new Error("Este no es un tipo de telefono valido");
+
+            const phoneExists = await dbUtils.exists("Phone", {
+                _id: phoneId,
+                client: newInputs.client,
+            });
+            if (!phoneExists)
+                throw new Error("Este cliente no cuenta con este telefono");
+
+            delete newInputs["client"];
+            await Phone.findByIdAndUpdate(phoneId, newInputs);
+
+            return {
+                msg: "Telefono actualizado con exito",
+            };
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
+    async dropPhone(parent, phoneData, { user }) {
+        try {
+            if (!user) throw new Error("No autorizado");
+            let newInputs = utils.onlyValidateLengthAndTrimInputs(phoneData);
+            let validInputs = utils.validateObject(newInputs);
+
+            if (!validInputs) throw new Error("Verifica tus campos");
+
+            console.log(newInputs);
+
+            const phoneExists = await dbUtils.exists("Phone", {
+                _id: newInputs.phoneId,
+                client: newInputs.clientId,
+            });
+            console.log(phoneExists);
+            if (!phoneExists)
+                throw new Error("Este cliente no cuenta con este telefono");
+
+            await Phone.findByIdAndDelete(newInputs.phoneId);
+            return {
+                msg: "Telefono eliminado con exito",
+            };
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
+    /*
     eliminarTelefono: async (obj, data, { currentuser }) => {
         try {
             if (!currentuser)
