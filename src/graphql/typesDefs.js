@@ -43,9 +43,10 @@ export default gql`
         phone: phoneInput
     }
 
-    # input clientUpdateInput {
-    #     name: String!
-    # }
+    input clientUpdateInput {
+        clientId: ID!
+        name: String!
+    }
 
     input measureInput {
         height: Int!
@@ -80,7 +81,7 @@ export default gql`
     type Mutation {
         addClient(input: clientInput!): JSON
         dropClient(clientId: ID!): JSON
-        #     updateClient(clientId: ID!, newData: clientUpdateInput!): Status!
+        updateClient(clientData: clientUpdateInput!): JSON
 
         addMeasure(clientId: ID!, measures: measureInput!): JSON
         updateMeasure(measureData: updateMeasureInput!): JSON

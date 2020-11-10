@@ -1,11 +1,8 @@
 import { User, Client, Phone } from "../../models/";
-import moment from "moment-timezone";
 import generateToken from "../../functions/generateToken";
 import * as auth from "../../functions/auth";
 import * as utils from "../../utils";
 import * as dbUtils from "../../db-utils";
-import user from "../../models/user";
-import client from "../../models/client";
 
 export default {
     async addClient(obj, { input }, { user }) {
@@ -93,99 +90,32 @@ export default {
             throw new Error(err);
         }
     },
-    async addPhoneType(parent, { type }, context) {
+    async updateClient(parent, { clientData }, { user }) {
         try {
-            let validType = utils.validateAndTrimLowerInput(type);
-            if (!validType)
-                throw new Error("Ingrese un tipo de telefono valido");
+            if (!user) throw new Error("No autorizado");
+            let newInputs = utils.onlyValidateLengthAndTrimInputs(clientData);
+            let validInputs = utils.validateObject(newInputs);
+            if (!validInputs) throw new Error("Verifica los campos");
 
-            return await dbUtils.newElement("PhoneType", { type });
+            let client = await Client.findOneAndUpdate(
+                {
+                    user: user._id,
+                    _id: newInputs.clientId,
+                },
+                { name: newInputs.name },
+                { new: true }
+            );
+
+            if (!client)
+                throw new Error("Este cliente no puede ser actualizado");
+
+            return {
+                msg: "Cliente actualizado con exito",
+            };
         } catch (err) {
             throw new Error(err);
         }
     },
-    /*
-    removeClient: async (obj, { clientId }, { currentuser }) => {
-        try {
-            if (!currentuser) {
-                return {
-                    message: "No debes estar aqui",
-                    loading: false,
-                };
-            }
-
-            const client = await Client.findById(clientId);
-            if (!client) {
-                return {
-                    message: "El cliente no existe",
-                    loading: false,
-                };
-            }
-
-            const user = await User.findById(currentuser.id);
-
-            const newList = user.clients.filter(
-                (id) => String(id) !== clientId
-            );
-
-            user.clients = newList;
-
-            await user.save();
-            await Client.findByIdAndDelete(clientId);
-            await Phone.deleteMany({ client: clientId });
-
-            return {
-                message: "Eliminado con exito",
-                loading: false,
-            };
-        } catch (err) {
-            return {
-                message: "error",
-                loading: false,
-            };
-        }
-    },
-    updateClient: async (obj, { clientId, newData }, { currentuser }) => {
-        if (!currentuser) {
-            return {
-                message: "No debes estar aqui",
-                loading: false,
-            };
-        }
-
-        try {
-            const validData = (newData) => {
-                if (!newData.name || !clientId) {
-                    return false;
-                }
-
-                return (
-                    String(newData.name).length > 3 &&
-                    String(clientId).length > 0
-                );
-            };
-
-            if (validData(newData)) {
-                await Client.findByIdAndUpdate(clientId, { ...newData });
-
-                return {
-                    message: "good",
-                    loading: false,
-                };
-            } else {
-                return {
-                    message: "Verique su informacion",
-                    loading: false,
-                };
-            }
-        } catch (err) {
-            return {
-                message: "err",
-                loading: false,
-            };
-        }
-    },
-    */
     async dropClient(parent, { clientId }, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
@@ -405,6 +335,17 @@ export default {
             return {
                 msg: "Telefono eliminado con exito",
             };
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
+    async addPhoneType(parent, { type }, context) {
+        try {
+            let validType = utils.validateAndTrimLowerInput(type);
+            if (!validType)
+                throw new Error("Ingrese un tipo de telefono valido");
+
+            return await dbUtils.newElement("PhoneType", { type });
         } catch (err) {
             throw new Error(err);
         }
