@@ -4,6 +4,8 @@ import generateToken from "../../functions/generateToken";
 import * as auth from "../../functions/auth";
 import * as utils from "../../utils";
 import * as dbUtils from "../../db-utils";
+import user from "../../models/user";
+import client from "../../models/client";
 
 export default {
     async addClient(obj, { input }, { user }) {
@@ -183,57 +185,30 @@ export default {
             };
         }
     },
-    deleteMeasure: async (obj, data, { currentuser }) => {
+    */
+    async dropClient(parent, { clientId }, { user }) {
         try {
-            // Verificar si el usuario inicio sesion
-            if (!currentuser) {
-                return {
-                    loading: false,
-                    error: "No autorizado",
-                    success: false,
-                };
-            }
+            if (!user) throw new Error("No autorizado");
+            let aprovedClientId = utils.onlyValidateLength(clientId);
+            if (!aprovedClientId) throw new Error("Este campo es requerido");
 
-            // Obtener los datos
-            const { clienteId, medidasId } = data;
+            let validClient = await dbUtils.exists("Client", {
+                _id: clientId,
+                user: user._id,
+            });
+            if (!validClient)
+                throw new Error("Este cliente no existe o no le pertenece");
 
-            // Buscar al cliente
-            let cliente = await Client.findById(clienteId);
-            if (!cliente)
-                return {
-                    success: false,
-                    error: "No existe el cliente",
-                    loading: false,
-                };
-
-            // Verifica si hay medidas que eliminar
-            if (cliente.measures.length === 0)
-                return {
-                    success: false,
-                    error: "No hay medidas que eliminar",
-                    loading: false,
-                };
-
-            //Eliminacion
-            cliente.measures = cliente.measures.filter(
-                (medidas) => medidas.id !== medidasId
-            );
-            cliente.save();
+            await Client.findByIdAndDelete(clientId);
+            await Phone.deleteMany({ client: clientId });
 
             return {
-                message: "Medida eliminada con exito",
-                loading: false,
-                success: true,
+                msg: "Cliente eliminado correctamente",
             };
         } catch (err) {
-            return {
-                loading: false,
-                success: false,
-                error: "Verifique la informacion que ingresa",
-            };
+            throw new Error(err);
         }
     },
-    */
     async addMeasure(parent, args, { user }) {
         try {
             if (!user) throw new Error("No autorizado");

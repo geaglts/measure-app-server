@@ -37,38 +37,6 @@ export default gql`
         clients: [Client]
     }
 
-    # type AboutMe {
-    #     userData: User
-    #     loading: Boolean!
-    # }
-
-    # type LoginData {
-    #     message: String
-    #     user: User
-    #     loading: Boolean!
-    # }
-
-    # type Clients {
-    #     clients: [Client]eso
-    #     loading: Boolean!
-    #     message: String
-    # }
-
-    # type Phones {
-    #     phones: [Phone]
-    #     loading: Boolean!
-    # }
-
-    # type MainPhone {
-    #     phone: Phone
-    #     loading: Boolean!
-    # }
-
-    # type StatusTypes {
-    #     types: [PhoneType]
-    #     loading: Boolean!
-    # }
-
     input clientInput {
         name: String!
         measures: measureInput
@@ -111,7 +79,7 @@ export default gql`
 
     type Mutation {
         addClient(input: clientInput!): JSON
-        #     removeClient(clientId: ID!): Status!
+        dropClient(clientId: ID!): JSON
         #     updateClient(clientId: ID!, newData: clientUpdateInput!): Status!
 
         addMeasure(clientId: ID!, measures: measureInput!): JSON
