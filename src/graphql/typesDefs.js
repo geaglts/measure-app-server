@@ -84,6 +84,12 @@ export default gql`
         waist: Int!
     }
 
+    input updateMeasureInput {
+        measureId: ID!
+        clientId: ID!
+        measures: measureInput!
+    }
+
     input phoneInput {
         phone: String!
         phoneType: ID!
@@ -108,9 +114,9 @@ export default gql`
         #     removeClient(clientId: ID!): Status!
         #     updateClient(clientId: ID!, newData: clientUpdateInput!): Status!
 
-        #     addMeasure(clientId: ID!, measures: measureInput!): Status!
-        #     deleteMeasure(medidasId: ID!, clienteId: ID!): Status!
-        #     updateMeasure(medidasId: ID!, clienteId: ID!, medidas: measureInput!): Status!
+        addMeasure(clientId: ID!, measures: measureInput!): JSON
+        updateMeasure(measureData: updateMeasureInput!): JSON
+        dropMeasure(measureId: ID!, clientId: ID!): JSON
 
         addPhone(phoneData: phoneInput!): Phone
         updatePhone(phoneData: phoneInput!, phoneId: ID!): JSON

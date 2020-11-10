@@ -24,9 +24,4 @@ export default {
             return await Client.find({ user: u.id });
         },
     },
-    Measure: {
-        creadoEl: async (m) => {
-            return new Date(m.creadoEl).toUTCString();
-        },
-    },
 };

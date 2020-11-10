@@ -1,4 +1,5 @@
 import { User, Client, Phone } from "../../models/";
+import moment from "moment-timezone";
 import generateToken from "../../functions/generateToken";
 import * as auth from "../../functions/auth";
 import * as utils from "../../utils";
@@ -33,7 +34,7 @@ export default {
                 if (clientExist)
                     throw new Error("Ya cuenta con un cliente con ese nombre");
 
-                newInputs.measures["creadoEl"] = Date.now();
+                newInputs.measures["creadoEl"] = utils.getDateNow();
                 newInputs.phone["isMain"] = true;
 
                 let client = new Client({
@@ -182,45 +183,6 @@ export default {
             };
         }
     },
-    addMeasure: async (obj, { clientId, measures }, { currentuser }) => {
-        if (!currentuser) {
-            return {
-                loading: false,
-                error: "No autorizado",
-                success: false,
-            };
-        }
-
-        try {
-            const client = await Client.findById(clientId);
-
-            if (client) {
-                client.measures.push({
-                    ...measures,
-                });
-
-                await client.save();
-
-                return {
-                    message: "Medida agregada con exito",
-                    loading: false,
-                    success: true,
-                };
-            } else {
-                return {
-                    loading: false,
-                    success: false,
-                    error: "Cliente no encontrado",
-                };
-            }
-        } catch (err) {
-            return {
-                loading: false,
-                success: false,
-                error: "Verifique la informacion que ingresa",
-            };
-        }
-    },
     deleteMeasure: async (obj, data, { currentuser }) => {
         try {
             // Verificar si el usuario inicio sesion
@@ -271,59 +233,107 @@ export default {
             };
         }
     },
-    updateMeasure: async (obj, data, { currentuser }) => {
+    */
+    async addMeasure(parent, args, { user }) {
         try {
-            // Verificar si el usuario inicio sesion
-            if (!currentuser) {
-                return {
-                    loading: false,
-                    error: "No autorizado",
-                    success: false,
-                };
-            }
+            if (!user) throw new Error("No autorizado");
+            let userId = user._id;
 
-            // Obtener los datos
-            const { clienteId, medidasId, medidas } = data;
-            // Buscar al cliente
-            let cliente = await Client.findById(clienteId);
-            if (!cliente)
-                return {
-                    success: false,
-                    error: "No existe el cliente",
-                    loading: false,
-                };
+            let newInputs = utils.onlyValidateLengthAndTrimInputs(args);
+            let validInputs = utils.validateObject(newInputs);
 
-            // actualizar
-            for (const index in cliente.measures) {
-                if (cliente.measures[index]._id == medidasId) {
-                    cliente.measures[index] = {
-                        _id: cliente.measures[index]._id,
-                        height: medidas.height
-                            ? medidas.height
-                            : cliente.measures[index].height,
-                        waist: medidas.waist
-                            ? medidas.waist
-                            : cliente.measures[index].waist,
-                    };
-                }
-            }
-            cliente.save();
+            if (!validInputs) throw new Error("Los campos no son validos");
 
-            return {
-                message: "Medida actualizada con exito",
-                loading: false,
-                success: true,
-            };
+            // Ver si el cliente le pertenece a ese usuario
+            let clientExist = await dbUtils.exists("Client", {
+                _id: newInputs.clientId,
+                user: userId,
+            });
+
+            if (!clientExist)
+                throw new Error("Este cliente no le pertenece a ese usuario");
+
+            let client = await Client.findById(newInputs.clientId, {
+                _id: 1,
+                measures: 1,
+            });
+
+            newInputs.measures["creadoEl"] = utils.getDateNow();
+
+            client.measures.push(newInputs.measures);
+
+            // ordenacion por fecha
+            client.measures.sort((a, b) =>
+                a.creadoEl == b.creadoEl ? 0 : a.creadoEl > b.creadoEl ? -1 : 1
+            );
+
+            await client.save();
+
+            return { msg: "Medida agregada correctamente" };
         } catch (err) {
-            console.log(err);
-            return {
-                loading: false,
-                success: false,
-                error: "Verifique la informacion que ingresa",
-            };
+            throw new Error(err);
         }
     },
-    */
+    async updateMeasure(parent, { measureData }, { user }) {
+        try {
+            if (!user) throw new Error("No autorizado");
+            let newInputs = utils.onlyValidateLengthAndTrimInputs(measureData);
+            let validInput = utils.validateObject(newInputs);
+            if (!validInput) throw new Error("Verifica tus campos");
+
+            let client = await Client.findOne(
+                {
+                    _id: newInputs.clientId,
+                    user: user._id,
+                },
+                {
+                    measures: 1,
+                }
+            );
+
+            if (!client)
+                throw new Error("Este cliente no existe o no le pertenece");
+
+            let isMeasure = (m) => m._id == newInputs.measureId;
+            let measureIndex = client.measures.findIndex(isMeasure);
+
+            let { _id, creadoEl } = client.measures[measureIndex];
+            newInputs.measures["_id"] = _id;
+            newInputs.measures["creadoEl"] = creadoEl;
+
+            client.measures[measureIndex] = newInputs.measures;
+
+            await client.save();
+
+            return { msg: "Medida actualizada correctamente" };
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
+    async dropMeasure(parent, args, { user }) {
+        try {
+            if (!user) throw new Error("No autorizado");
+            let newInputs = utils.onlyValidateLengthAndTrimInputs(args);
+            let validInput = utils.validateObject(newInputs);
+            if (!validInput) throw new Error("Verifica tus campos");
+
+            let client = await Client.findOne({
+                _id: newInputs.clientId,
+                user: user._id,
+            });
+            if (!client)
+                throw new Error("Este usuario no existe o no te pertenece");
+
+            let compareMeasures = (m) => String(m._id) !== newInputs.measureId;
+            client.measures = client.measures.filter(compareMeasures);
+
+            await client.save();
+
+            return { msg: "La medida fue eliminada correctamente" };
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
     async addPhone(obj, { phoneData }, { user }) {
         try {
             if (!user) throw new Error("No authotizado");
@@ -332,8 +342,8 @@ export default {
 
             if (!validInputs) throw new Error("Verifica tus campos");
 
-            const client = dbUtils.exists("Client", {
-                _id: newInputs.clients,
+            const client = await dbUtils.exists("Client", {
+                _id: newInputs.client,
                 user: user._id,
             });
             if (!client)
@@ -347,11 +357,12 @@ export default {
 
             const phoneExists = await dbUtils.exists("Phone", {
                 phone: newInputs.phone,
+                client: newInputs.client,
             });
             if (phoneExists) throw new Error("Este numero ya esta registrado");
 
             await Phone.findOneAndUpdate(
-                { isMain: true },
+                { isMain: true, client: newInputs.client },
                 { isMain: false },
                 { new: true }
             );
@@ -407,17 +418,15 @@ export default {
 
             if (!validInputs) throw new Error("Verifica tus campos");
 
-            console.log(newInputs);
-
             const phoneExists = await dbUtils.exists("Phone", {
                 _id: newInputs.phoneId,
                 client: newInputs.clientId,
             });
-            console.log(phoneExists);
             if (!phoneExists)
                 throw new Error("Este cliente no cuenta con este telefono");
 
             await Phone.findByIdAndDelete(newInputs.phoneId);
+
             return {
                 msg: "Telefono eliminado con exito",
             };
@@ -425,167 +434,6 @@ export default {
             throw new Error(err);
         }
     },
-    /*
-    eliminarTelefono: async (obj, data, { currentuser }) => {
-        try {
-            if (!currentuser)
-                return {
-                    loading: false,
-                    error: "No autorizado",
-                    success: false,
-                };
-
-            let cliente = await Client.findById(data.clienteId);
-            if (!cliente)
-                return { loading: false, error: "Cliente no encontrado" };
-            cliente.phones = cliente.phones.filter((x) => x != data.telefonoId);
-            cliente.save();
-            await Phone.findByIdAndRemove(data.telefonoId);
-
-            return {
-                message: "Eliminado correctamente",
-                loading: false,
-                success: true,
-            };
-        } catch (err) {
-            console.log(err);
-            return {
-                error: "Verifique la informacion que ingresa",
-                success: false,
-                loading: false,
-            };
-        }
-    },
-    actualizarTelefono: async (obj, data, { currentuser }) => {
-        try {
-            if (!currentuser)
-                return {
-                    loading: false,
-                    error: "No autorizado",
-                    success: false,
-                };
-
-            // Buscar el telefono y actualizar los datos
-            await Phone.findByIdAndUpdate(
-                data.telefonoId,
-                {
-                    ...data.datos,
-                },
-                {
-                    new: true,
-                }
-            );
-
-            return {
-                message: "Actualizado correctamente",
-                loading: false,
-                success: true,
-            };
-        } catch (err) {
-            console.log(err);
-            return {
-                error: "Verifique la informacion que ingresa",
-                success: false,
-                loading: false,
-            };
-        }
-    },
-    newPhoneType: async (obj, { type }) => {
-        try {
-            //campos verificados
-            const verifiedType = type.trim().toLowerCase();
-
-            //validacion de inputs
-            const valid_type = verifiedType.length > 0;
-
-            if (!valid_type) {
-                return {
-                    message: "El campo no debe estar vacio",
-                    loading: false,
-                };
-            }
-
-            //verifica si ya existe un tipo igual
-            const typeExists = await PhoneType.findOne({
-                type: verifiedType,
-            });
-
-            if (typeExists) {
-                return {
-                    message: "Ese tipo de telefono ya esta registrado",
-                    loading: false,
-                };
-            } else {
-                const newPhoneType = new PhoneType({ type: verifiedType });
-
-                await newPhoneType.save();
-
-                return {
-                    message: "Registro guardado con exito",
-                    loading: false,
-                };
-            }
-        } catch (err) {
-            return {
-                message: "Estoy trabajando en eso",
-                loading: false,
-            };
-        }
-    },
-    updatePhoneType: async (obj, { id, type }) => {
-        try {
-            //campos verificados
-            const verifiedType = type.trim().toLowerCase();
-
-            //validacion de inputs
-            const valid_type = verifiedType.length > 0;
-
-            if (!valid_type) {
-                return {
-                    message: "el campo no puede estar vacio",
-                    loading: false,
-                };
-            }
-
-            await PhoneType.findByIdAndUpdate(id, { type: verifiedType });
-
-            return {
-                message: "Registro actualizado con exito",
-                loading: false,
-            };
-        } catch (err) {
-            return {
-                message: "Estoy trabajando en eso",
-                loading: false,
-            };
-        }
-    },
-    deletePhoneType: async (obj, { id }) => {
-        try {
-            //verifica el id
-            const verifiedId = id.trim().length > 0;
-
-            let message = "";
-
-            if (verifiedId) {
-                await PhoneType.findByIdAndDelete(id.trim());
-
-                message = "Eliminado con exito";
-            } else {
-                message = "El id no es valido";
-            }
-
-            return {
-                message,
-                loading: false,
-            };
-        } catch (err) {
-            return {
-                message: "Verifique su informacion",
-                loading: false,
-            };
-        }
-    }, */
     async login(parent, args) {
         try {
             let email = utils.validateAndTrimLowerInput(args.email);

@@ -1,3 +1,5 @@
+import moment from "moment-timezone";
+
 export function validateAndTrimLowerInput(input = "", limitLength = 0) {
     if (input.length > limitLength) {
         let formatedInput = input.trim().toLowerCase();
@@ -52,6 +54,10 @@ export function onlyValidateLengthAndTrimInputs(input = {}, newInputs = {}) {
 }
 
 export function validateObject(object = {}) {
+    if (object === null) {
+        return false;
+    }
+
     for (let key in object) {
         if (object[key] === null) {
             return false;
@@ -65,4 +71,8 @@ export function validateEspecificLength(field, length = 0) {
         return null;
     }
     return field;
+}
+
+export function getDateNow() {
+    return moment.tz(Date.now(), "America/Mexico_City").format();
 }

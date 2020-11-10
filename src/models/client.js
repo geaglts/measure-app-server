@@ -20,7 +20,7 @@ const clientSchema = new Schema({
                 default: 0,
             },
             creadoEl: {
-                type: Date,
+                type: String,
             },
         },
     ],
