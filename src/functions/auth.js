@@ -1,6 +1,3 @@
-import { config } from "dotenv";
-config();
-
 import { genSalt, hash, compare } from "bcrypt";
 
 export const hashPassword = async (password) => {

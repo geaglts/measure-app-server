@@ -1,6 +1,3 @@
-import { config } from "dotenv";
-config();
-
 import { sign } from "jsonwebtoken";
 
 export default (data) => {

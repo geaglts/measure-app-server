@@ -4,7 +4,7 @@
     "description": "",
     "main": "./lib/index.js",
     "scripts": {
-        "dev": "nodemon --exec babel-node ./src/index.js",
+        "dev": "env-cmd -f src/config/dev.env nodemon --exec babel-node ./src/index.js",
         "build": "babel src --out-dir lib",
         "start": "node ./lib/index.js"
     },
@@ -29,7 +29,7 @@
         "apollo-server": "^2.19.0",
         "bcrypt": "^5.0.0",
         "core-js": "^3.7.0",
-        "dotenv": "^8.2.0",
+        "env-cmd": "^10.1.0",
         "express-graphql": "^0.11.0",
         "graphql": "^15.4.0",
         "graphql-type-json": "^0.3.2",

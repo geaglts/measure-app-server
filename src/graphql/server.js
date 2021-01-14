@@ -1,6 +1,3 @@
-import { config } from "dotenv";
-config();
-
 import { ApolloServer } from "apollo-server";
 import isAuthenticated from "../functions/isAuthenticated";
 

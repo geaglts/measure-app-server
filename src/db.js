@@ -1,10 +1,6 @@
 import mongoose from "mongoose";
-import environment from "./config/";
-
-const uri = environment.database_url;
-
 export default mongoose
-    .connect(uri, {
+    .connect(process.env.DATABASE_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useFindAndModify: false,
