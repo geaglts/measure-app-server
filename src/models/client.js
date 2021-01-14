@@ -1,9 +1,12 @@
 import { Schema, model } from "mongoose";
+import { User } from ".";
 
 const clientSchema = new Schema({
     name: {
         type: String,
         required: true,
+        trim: true,
+        lowercase: true,
     },
     user: {
         type: Schema.Types.ObjectId,
@@ -14,10 +17,12 @@ const clientSchema = new Schema({
             height: {
                 type: Number,
                 default: 0,
+                required: true,
             },
             waist: {
                 type: Number,
                 default: 0,
+                required: true,
             },
             creadoEl: {
                 type: String,
@@ -26,4 +31,21 @@ const clientSchema = new Schema({
     ],
 });
 
-export default model("Client", clientSchema, "clients");
+clientSchema.pre("save", async function (next) {
+    const client = this;
+
+    const clientExists = await clientModel.findOne({
+        name: client.name,
+        user: client.user,
+    });
+
+    if (clientExists) {
+        throw new Error("Ya cuenta con un cliente con este nombre.");
+    }
+
+    next();
+});
+
+const clientModel = model("Client", clientSchema, "clients");
+
+export default clientModel;

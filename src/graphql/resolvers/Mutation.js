@@ -1,117 +1,47 @@
-import { User, Client, Phone } from "../../models/";
-import generateToken from "../../functions/generateToken";
-import * as auth from "../../functions/auth";
+import { User, Client, Phone, PhoneType } from "../../models/";
 import * as utils from "../../utils";
 import * as dbUtils from "../../db-utils";
 
 export default {
-    async addClient(obj, { input }, { user }) {
+    async addClient(parent, { input }, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
-            const userId = user._id;
-            const validUser = await dbUtils.exists(["User"], {
-                _id: userId,
+
+            const client = new Client({
+                name: input.name,
+                measures: input.measures,
+                user: user._id,
             });
-            if (!validUser) throw new Error("Este usuario no existe");
 
-            const newInputs = utils.onlyValidateLengthAndTrimInputs(input);
-            const validInputs = utils.validateObject(newInputs);
+            const phoneClient = new Phone({
+                phone: input.phone.phone,
+                phoneType: input.phone.phoneType,
+                client: client._id,
+            });
 
-            if (validInputs) {
-                const validPhoneType = await dbUtils.exists(["PhoneType"], {
-                    _id: newInputs.phone.phoneType,
-                });
+            await client.save();
+            await phoneClient.save();
 
-                if (!validPhoneType)
-                    throw new Error("Este tipo de telefono no es valido");
-
-                let clientExist = await Client.findOne({
-                    user: userId,
-                    name: newInputs.name,
-                });
-
-                if (clientExist)
-                    throw new Error("Ya cuenta con un cliente con ese nombre");
-
-                newInputs.measures["creadoEl"] = utils.getDateNow();
-                newInputs.phone["isMain"] = true;
-
-                let client = new Client({
-                    name: newInputs.name,
-                    measures: newInputs.measures,
-                    user: userId,
-                });
-
-                let phone = new Phone({
-                    ...newInputs.phone,
-                    client: client._id,
-                });
-
-                await client.save();
-                await phone.save();
-
-                return { msg: "Cliente agregado correctamente" };
-            }
-
-            throw new Error("Verifica los campos que mandas");
-            // const cliente = await Client.findOne({
-            //     name,
-            //     user,
-            // });
-
-            // if (cliente) {
-            //     return {
-            //         message: "Ya hay un cliente con ese nombre",
-            //         success: false,
-            //         loading: false,
-            //     };
-            // }
-
-            // const theUser = await User.findById(user);
-            // const client = new Client({ ...input });
-            // const phone = new Phone({
-            //     ...phoneNumber,
-            //     client: client._id,
-            //     isMain: true,
-            // });
-
-            // await phone.save();
-            // client.phones.push(phone);
-            // await client.save();
-            // theUser.clients.push(client);
-            // await theUser.save();
-
-            // return {
-            //     message: "Cliente agregado con exito",
-            //     loading: false,
-            //     success: true,
-            // };
+            return client;
         } catch (err) {
             throw new Error(err);
         }
     },
-    async updateClient(parent, { clientData }, { user }) {
+    async updateClient(parent, { input }, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
-            let newInputs = utils.onlyValidateLengthAndTrimInputs(clientData);
-            let validInputs = utils.validateObject(newInputs);
-            if (!validInputs) throw new Error("Verifica los campos");
 
-            let client = await Client.findOneAndUpdate(
-                {
-                    user: user._id,
-                    _id: newInputs.clientId,
-                },
-                { name: newInputs.name },
-                { new: true }
-            );
+            const client = await Client.findById(input.clientId);
+            if (!client) throw new Error("Cliente no encontrado.");
 
-            if (!client)
-                throw new Error("Este cliente no puede ser actualizado");
+            if (client.name === input.name) {
+                return client;
+            }
 
-            return {
-                msg: "Cliente actualizado con exito",
-            };
+            client.name = input.name;
+            await client.save();
+
+            return client;
         } catch (err) {
             throw new Error(err);
         }
@@ -341,69 +271,27 @@ export default {
     },
     async addPhoneType(parent, { type }, context) {
         try {
-            let validType = utils.validateAndTrimLowerInput(type);
-            if (!validType)
-                throw new Error("Ingrese un tipo de telefono valido");
-
-            return await dbUtils.newElement("PhoneType", { type });
+            const phoneType = new PhoneType({ type });
+            await phoneType.save();
+            return phoneType;
         } catch (err) {
             throw new Error(err);
         }
     },
-    async login(parent, args) {
+    async login(parent, { userName, password }) {
         try {
-            let email = utils.validateAndTrimLowerInput(args.email);
-
-            if (!email) throw new Error("Inputs no validos");
-
-            let userData = await User.findOne(
-                { email },
-                { _id: 1, email: 1, password: 1 }
-            );
-
-            if (!userData) throw new Error("Correo y/o Contraseña incorrecta");
-
-            const passwordMatch = await auth.comparePassword(
-                args.password,
-                userData.password
-            );
-
-            if (!passwordMatch)
-                throw new Error("Correo y/o Contraseña incorrecta");
-
-            userData = userData.toJSON();
-            delete userData.password;
-
-            return {
-                token: generateToken(userData),
-            };
+            const user = await User.findByCredentials(userName, password);
+            const token = await user.generateAuthToken();
+            return { user, token };
         } catch (err) {
             throw new Error(err);
         }
     },
     async register(parent, { input }) {
         try {
-            let email = utils.validateAndTrimLowerInput(input.email);
-            let password = utils.onlyValidateLength(input.password, 8);
-
-            if (!email || !password) throw new Error("Inputs no validos");
-
-            const userExists = await User.findOne({ email }, { _id: 1 });
-
-            if (!userExists) {
-                let passwordHash = await auth.hashPassword(password);
-
-                await User.create({
-                    email,
-                    password: passwordHash,
-                });
-
-                return {
-                    msg: "Cuenta creada con exito",
-                };
-            }
-
-            throw new Error("Ya exsiste una cuenta con estos datos");
+            const newUser = new User(input);
+            await newUser.save();
+            return newUser;
         } catch (err) {
             throw new Error(err);
         }

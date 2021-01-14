@@ -1,4 +1,4 @@
-import { User, Client, PhoneType, Phone } from "../../models/";
+import { User, Client, PhoneType } from "../../models/";
 
 export default {
     async getClients(parent, args, { user }) {
@@ -22,13 +22,8 @@ export default {
             throw new Error(err);
         }
     },
-    async me(parent, args, { user: currentuser }) {
+    async me(parent, args, { user }) {
         try {
-            if (!currentuser) throw new Error("No tiene autorización");
-
-            let user = await User.findById(currentuser._id);
-            if (!user) throw new Error("No deberias estar aqui amiga");
-
             return user;
         } catch (err) {
             throw new Error(err);

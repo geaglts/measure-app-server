@@ -33,7 +33,7 @@ export default gql`
 
     type User {
         id: ID!
-        email: String!
+        userName: String!
         clients: [Client]
     }
 
@@ -66,7 +66,7 @@ export default gql`
     }
 
     input userInput {
-        email: String!
+        userName: String!
         password: String!
     }
 
@@ -79,9 +79,9 @@ export default gql`
     }
 
     type Mutation {
-        addClient(input: clientInput!): JSON
+        addClient(input: clientInput!): Client
         dropClient(clientId: ID!): JSON
-        updateClient(clientData: clientUpdateInput!): JSON
+        updateClient(input: clientUpdateInput!): Client
 
         addMeasure(clientId: ID!, measures: measureInput!): JSON
         updateMeasure(measureData: updateMeasureInput!): JSON
@@ -93,7 +93,7 @@ export default gql`
 
         addPhoneType(type: String!): PhoneType
 
-        login(email: String!, password: String!): JSON
+        login(userName: String!, password: String!): JSON
         register(input: userInput!): JSON
     }
 `;
