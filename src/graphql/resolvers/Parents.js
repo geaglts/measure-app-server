@@ -6,9 +6,7 @@ export default {
             return await User.findById(c.user);
         },
         phones: async (c) => {
-            return await Phone.find({ client: c.id }).sort({
-                isMain: -1,
-            });
+            return await Phone.find({ client: c.id }).sort("-createdAt");
         },
         mainPhone: async (c) => {
             return await Phone.findOne({ client: c.id, isMain: true });

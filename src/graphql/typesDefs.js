@@ -24,6 +24,7 @@ export default gql`
         phone: String!
         isMain: Boolean!
         phoneType: PhoneType
+        createdAt: String!
     }
 
     type PhoneType {
@@ -63,6 +64,7 @@ export default gql`
         phone: String!
         phoneType: ID!
         client: ID
+        isMain: Boolean
     }
 
     input userInput {

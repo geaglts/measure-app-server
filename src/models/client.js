@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 import Phone from "./phone";
-import * as utils from "../utils";
+import { getDateNow } from "../utils";
 
 const clientSchema = new Schema({
     name: {
@@ -34,9 +34,7 @@ const clientSchema = new Schema({
 
 clientSchema.statics.findUserClient = async function (filter) {
     const client = await clientModel.findOne(filter);
-
     if (!client) throw new Error("Este usuario no te pertenece.");
-
     return client;
 };
 
@@ -48,7 +46,7 @@ clientSchema.pre("remove", async function (next) {
 
 clientSchema.methods.addMeasures = async function (measures) {
     const client = this;
-    measures["creadoEl"] = utils.getDateNow();
+    measures["creadoEl"] = getDateNow();
     client.measures.push(measures);
     // Ordenación de las medidas por fecha.
     client.measures.sort((a, b) =>
