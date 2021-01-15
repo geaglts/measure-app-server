@@ -9,7 +9,6 @@ export default {
 
             const client = new Client({
                 name: input.name,
-                measures: input.measures,
                 user: user._id,
             });
 
@@ -20,6 +19,7 @@ export default {
             });
 
             await client.save();
+            await client.addMeasures(input.measures);
             await phoneClient.save();
 
             return client;
@@ -68,39 +68,15 @@ export default {
     async addMeasure(parent, args, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
-            let userId = user._id;
 
-            let newInputs = utils.onlyValidateLengthAndTrimInputs(args);
-            let validInputs = utils.validateObject(newInputs);
-
-            if (!validInputs) throw new Error("Los campos no son validos");
-
-            // Ver si el cliente le pertenece a ese usuario
-            let clientExist = await dbUtils.exists("Client", {
-                _id: newInputs.clientId,
-                user: userId,
+            const client = await Client.findUserClient({
+                _id: args.clientId,
+                user: user._id,
             });
 
-            if (!clientExist)
-                throw new Error("Este cliente no le pertenece a ese usuario");
+            await client.addMeasures(args.measures);
 
-            let client = await Client.findById(newInputs.clientId, {
-                _id: 1,
-                measures: 1,
-            });
-
-            newInputs.measures["creadoEl"] = utils.getDateNow();
-
-            client.measures.push(newInputs.measures);
-
-            // ordenacion por fecha
-            client.measures.sort((a, b) =>
-                a.creadoEl == b.creadoEl ? 0 : a.creadoEl > b.creadoEl ? -1 : 1
-            );
-
-            await client.save();
-
-            return { msg: "Medida agregada correctamente" };
+            return { message: "Medidas agregadas correctamente." };
         } catch (err) {
             throw new Error(err);
         }
@@ -108,59 +84,45 @@ export default {
     async updateMeasure(parent, { measureData }, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
-            let newInputs = utils.onlyValidateLengthAndTrimInputs(measureData);
-            let validInput = utils.validateObject(newInputs);
-            if (!validInput) throw new Error("Verifica tus campos");
 
-            let client = await Client.findOne(
-                {
-                    _id: newInputs.clientId,
-                    user: user._id,
-                },
-                {
-                    measures: 1,
-                }
-            );
+            const { measureId, clientId, measures } = measureData;
 
-            if (!client)
-                throw new Error("Este cliente no existe o no le pertenece");
+            const client = await Client.findUserClient({
+                _id: clientId,
+                user: user._id,
+            });
 
-            let isMeasure = (m) => m._id == newInputs.measureId;
-            let measureIndex = client.measures.findIndex(isMeasure);
+            const measureIndex = client.measures.findIndex((measure) => {
+                return measure._id.toString() === measureId;
+            });
 
-            let { _id, creadoEl } = client.measures[measureIndex];
-            newInputs.measures["_id"] = _id;
-            newInputs.measures["creadoEl"] = creadoEl;
-
-            client.measures[measureIndex] = newInputs.measures;
+            client.measures[measureIndex]["height"] = measures.height;
+            client.measures[measureIndex]["waist"] = measures.waist;
 
             await client.save();
 
-            return { msg: "Medida actualizada correctamente" };
+            return { message: "Medida actualizada correctamente." };
         } catch (err) {
             throw new Error(err);
         }
     },
-    async dropMeasure(parent, args, { user }) {
+    async dropMeasure(parent, { clientId, measureId }, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
-            let newInputs = utils.onlyValidateLengthAndTrimInputs(args);
-            let validInput = utils.validateObject(newInputs);
-            if (!validInput) throw new Error("Verifica tus campos");
 
-            let client = await Client.findOne({
-                _id: newInputs.clientId,
+            const client = await Client.findUserClient({
+                _id: clientId,
                 user: user._id,
             });
-            if (!client)
-                throw new Error("Este usuario no existe o no te pertenece");
 
-            let compareMeasures = (m) => String(m._id) !== newInputs.measureId;
-            client.measures = client.measures.filter(compareMeasures);
+            client.measures = client.measures.filter((measure) => {
+                const _id = measure._id.toString();
+                return _id !== measureId;
+            });
 
             await client.save();
 
-            return { msg: "La medida fue eliminada correctamente" };
+            return { message: "La medida fue eliminada correctamente." };
         } catch (err) {
             throw new Error(err);
         }

@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import Phone from "./phone";
+import * as utils from "../utils";
 
 const clientSchema = new Schema({
     name: {
@@ -31,26 +32,31 @@ const clientSchema = new Schema({
     ],
 });
 
-clientSchema.pre("save", async function (next) {
-    const client = this;
+clientSchema.statics.findUserClient = async function (filter) {
+    const client = await clientModel.findOne(filter);
 
-    const clientExists = await clientModel.findOne({
-        name: client.name,
-        user: client.user,
-    });
+    if (!client) throw new Error("Este usuario no te pertenece.");
 
-    if (clientExists) {
-        throw new Error("Ya cuenta con un cliente con este nombre.");
-    }
-
-    next();
-});
+    return client;
+};
 
 clientSchema.pre("remove", async function (next) {
     const client = this;
     await Phone.deleteMany({ client: client._id });
     next();
 });
+
+clientSchema.methods.addMeasures = async function (measures) {
+    const client = this;
+    measures["creadoEl"] = utils.getDateNow();
+    client.measures.push(measures);
+    // Ordenación de las medidas por fecha.
+    client.measures.sort((a, b) =>
+        a.creadoEl == b.creadoEl ? 0 : a.creadoEl > b.creadoEl ? -1 : 1
+    );
+    await client.save();
+    return client;
+};
 
 const clientModel = model("Client", clientSchema, "clients");
 
