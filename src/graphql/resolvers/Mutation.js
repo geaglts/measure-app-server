@@ -49,22 +49,18 @@ export default {
     async dropClient(parent, { clientId }, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
-            let aprovedClientId = utils.onlyValidateLength(clientId);
-            if (!aprovedClientId) throw new Error("Este campo es requerido");
 
-            let validClient = await dbUtils.exists("Client", {
-                _id: clientId,
+            const client = await Client.findOne({
                 user: user._id,
+                _id: clientId,
             });
-            if (!validClient)
-                throw new Error("Este cliente no existe o no le pertenece");
 
-            await Client.findByIdAndDelete(clientId);
-            await Phone.deleteMany({ client: clientId });
+            if (!client)
+                throw new Error("Este usuario no puede ser eliminado.");
 
-            return {
-                msg: "Cliente eliminado correctamente",
-            };
+            await client.remove();
+
+            return client;
         } catch (err) {
             throw new Error(err);
         }

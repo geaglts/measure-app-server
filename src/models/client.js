@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { User } from ".";
+import Phone from "./phone";
 
 const clientSchema = new Schema({
     name: {
@@ -43,6 +43,12 @@ clientSchema.pre("save", async function (next) {
         throw new Error("Ya cuenta con un cliente con este nombre.");
     }
 
+    next();
+});
+
+clientSchema.pre("remove", async function (next) {
+    const client = this;
+    await Phone.deleteMany({ client: client._id });
     next();
 });
 

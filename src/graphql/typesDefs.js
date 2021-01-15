@@ -80,8 +80,8 @@ export default gql`
 
     type Mutation {
         addClient(input: clientInput!): Client
-        dropClient(clientId: ID!): JSON
         updateClient(input: clientUpdateInput!): Client
+        dropClient(clientId: ID!): Client
 
         addMeasure(clientId: ID!, measures: measureInput!): JSON
         updateMeasure(measureData: updateMeasureInput!): JSON
