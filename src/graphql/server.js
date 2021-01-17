@@ -3,7 +3,7 @@ import path from "path";
 import { readFileSync } from "fs";
 import isAuthenticated from "../functions/isAuthenticated";
 
-const graphqlSchemaPath = path.resolve(__dirname, "schema.graphql");
+const graphqlSchemaPath = path.resolve(__dirname, "typeDefs.graphql");
 const typeDefs = readFileSync(graphqlSchemaPath, "utf-8");
 import resolvers from "./resolvers";
 

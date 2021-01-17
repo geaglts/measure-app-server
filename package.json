@@ -4,9 +4,9 @@
     "description": "",
     "main": "./lib/index.js",
     "scripts": {
-        "dev": "env-cmd -f src/config/dev.env nodemon --exec babel-node ./src/index.js",
-        "build": "babel src --out-dir lib",
-        "start": "node ./lib/index.js"
+        "dev": "env-cmd -f src/config/dev.env nodemon -e js,graphql --exec babel-node ./src/index.js",
+        "build": "babel src --out-dir dist && cp ./src/graphql/typeDefs.graphql ./dist/graphql/typeDefs.graphql",
+        "start": "env-cmd -f src/config/prod.env node ./dist/index.js"
     },
     "repository": {
         "type": "git",

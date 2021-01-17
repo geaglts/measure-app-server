@@ -236,4 +236,24 @@ export default {
             throw new Error(err);
         }
     },
+    async logout(parent, args, { user, token }) {
+        try {
+            if (!user) throw new Error("No autorizado");
+            user.tokens = user.tokens.filter((t) => t.token !== token);
+            await user.save();
+            return "Hasta luego.";
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
+    async logoutAll(parent, args, { user }) {
+        try {
+            if (!user) throw new Error("No autorizado");
+            user.tokens = [];
+            await user.save();
+            return "Hasta luego.";
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
 };
