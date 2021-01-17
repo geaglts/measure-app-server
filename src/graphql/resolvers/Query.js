@@ -1,6 +1,13 @@
-import { User, Client, PhoneType } from "../../models/";
+import { Client, PhoneType } from "../../models/";
 
 export default {
+    async info() {
+        try {
+            return "El servidor está funcionando correctamente.";
+        } catch (err) {
+            throw new Error(err);
+        }
+    },
     async getClients(parent, args, { user }) {
         try {
             if (!user) throw new Error("No autorizado");
