@@ -233,6 +233,10 @@ export default {
             await newUser.save();
             return newUser;
         } catch (err) {
+            let isDuplicateName = err.toString().search("E11000");
+            if (isDuplicateName) {
+                throw new Error("Este usuario ya está registrado.");
+            }
             throw new Error(err);
         }
     },
