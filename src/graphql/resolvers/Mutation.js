@@ -1,5 +1,5 @@
 import { User, Client, Phone, PhoneType } from "../../models/";
-import { parseErrors } from "../../utils";
+import { parseErrors, isAdmin } from "../../utils";
 
 export default {
     async addClient(parent, { input }, { user }) {
@@ -210,13 +210,14 @@ export default {
             throw new Error(err);
         }
     },
-    async addPhoneType(parent, { type }, context) {
+    async addPhoneType(parent, { type }, { user }) {
         try {
+            isAdmin(user);
             const phoneType = new PhoneType({ type });
             await phoneType.save();
             return phoneType;
         } catch (err) {
-            throw new Error(err);
+            parseErrors(err);
         }
     },
     async login(parent, { userName, password }) {
@@ -259,8 +260,7 @@ export default {
     },
     async createBasicPhoneTypes(parent, args, { user }) {
         try {
-            const isValidUser = !user || user.userName !== "admingea";
-            if (isValidUser) throw new Error("403:No autorizado");
+            isAdmin(user);
 
             await PhoneType.deleteMany({});
             await PhoneType.insertMany([

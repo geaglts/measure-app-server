@@ -16,3 +16,8 @@ export function parseErrors(error) {
     }
     throw new Error(errorToString);
 }
+
+export function isAdmin(user) {
+    const isValidUser = !user || user.userName !== "admingea";
+    if (isValidUser) throw new Error("403:No autorizado");
+}
