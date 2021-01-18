@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "env-cmd -f src/config/dev.env nodemon -e js,graphql --exec babel-node ./src/index.js",
         "build": "babel src --out-dir dist && cp ./src/graphql/typeDefs.graphql ./dist/graphql/typeDefs.graphql",
-        "start": "env-cmd -f src/config/prod.env node ./dist/index.js"
+        "prod": "env-cmd -f src/config/prod.env node ./dist/index.js",
+        "start": "node ./dist/index.js"
     },
     "repository": {
         "type": "git",
