@@ -99,3 +99,7 @@ extend type Mutation {
     logout: String!
     logoutAll: String!
 }
+
+extend type Mutation {
+    createBasicPhoneTypes: JSON
+}

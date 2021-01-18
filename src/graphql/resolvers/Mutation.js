@@ -1,4 +1,5 @@
 import { User, Client, Phone, PhoneType } from "../../models/";
+import { parseErrors } from "../../utils";
 
 export default {
     async addClient(parent, { input }, { user }) {
@@ -16,13 +17,13 @@ export default {
                 client: client._id,
             });
 
+            await phoneClient.save();
             await client.save();
             await client.addMeasures(input.measures);
-            await phoneClient.save();
 
             return client;
         } catch (err) {
-            throw new Error(err);
+            throw new Error("Revise los datos.");
         }
     },
     async updateClient(parent, { input }, { user }) {
@@ -41,7 +42,7 @@ export default {
 
             return client;
         } catch (err) {
-            throw new Error(err);
+            throw new Error("Revise los datos.");
         }
     },
     async dropClient(parent, { clientId }, { user }) {
@@ -233,11 +234,7 @@ export default {
             await newUser.save();
             return newUser;
         } catch (err) {
-            let isDuplicateName = err.toString().search("E11000");
-            if (isDuplicateName) {
-                throw new Error("Este usuario ya está registrado.");
-            }
-            throw new Error(err);
+            parseErrors(err);
         }
     },
     async logout(parent, args, { user, token }) {
@@ -258,6 +255,23 @@ export default {
             return "Hasta luego.";
         } catch (err) {
             throw new Error(err);
+        }
+    },
+    async createBasicPhoneTypes(parent, args, { user }) {
+        try {
+            const isValidUser = !user || user.userName !== "admingea";
+            if (isValidUser) throw new Error("403:No autorizado");
+
+            await PhoneType.deleteMany({});
+            await PhoneType.insertMany([
+                { type: "movil" },
+                { type: "oficina" },
+                { type: "casa" },
+            ]);
+
+            return { message: "Tipos creados correctamente." };
+        } catch (err) {
+            parseErrors(err);
         }
     },
 };
