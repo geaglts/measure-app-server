@@ -5,6 +5,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+pnpm-lock.yaml
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -124,7 +125,8 @@ package.json.*
 .my-data
 .todo
 readme.todo
-lib
 
 *.env
 *.log
+
+mongo_data

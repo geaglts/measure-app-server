@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
+import vars from "../configs/envVars";
+
 export default mongoose
-    .connect(process.env.DATABASE_URL, {
+    .connect(vars.database.prodMongoUri, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useFindAndModify: false,

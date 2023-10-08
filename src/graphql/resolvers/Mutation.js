@@ -229,15 +229,6 @@ export default {
             throw new Error(err);
         }
     },
-    async register(parent, { input }) {
-        try {
-            const newUser = new User(input);
-            await newUser.save();
-            return newUser;
-        } catch (err) {
-            parseErrors(err);
-        }
-    },
     async logout(parent, args, { user, token }) {
         try {
             if (!user) throw new Error("No autorizado");

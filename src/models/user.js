@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import envVars from "../configs/envVars";
 
 const userSchema = new Schema(
     {
@@ -40,41 +41,29 @@ const userSchema = new Schema(
 
 userSchema.pre("save", async function (next) {
     const user = this;
-
     if (user.isModified("password")) {
-        const hashedPassword = await bcrypt.hash(
-            user.password,
-            await bcrypt.genSalt()
-        );
-
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(user.password, salt);
         user.password = hashedPassword;
     }
-
     next();
 });
 
 userSchema.methods.toJSON = function () {
     const user = this;
     const userObject = user.toObject();
-
     delete userObject.password;
     delete userObject.tokens;
-
     return userObject;
 };
 
 userSchema.methods.generateAuthToken = async function () {
     const user = this;
-
-    const DATA = { _id: user._id.toString() };
-    const SECRET = process.env.JWT_SECRET;
-    const expiresIn = 60 * 60 * 24 * 100;
-
-    const token = jwt.sign(DATA, SECRET, { expiresIn });
-
+    const data = { _id: user._id.toString() };
+    const tokenConfigs = { expiresIn: "24h" };
+    const token = jwt.sign(data, envVars.auth.jwtSecret, tokenConfigs);
     user.tokens = user.tokens.concat({ token });
     await user.save();
-
     return token;
 };
 

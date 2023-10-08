@@ -64,11 +64,6 @@ input phoneInput {
     isMain: Boolean
 }
 
-input userInput {
-    userName: String!
-    password: String!
-}
-
 type Query {
     info: String
     getClients: [Client]
@@ -92,7 +87,6 @@ type Mutation {
     addPhoneType(type: String!): PhoneType
 
     login(userName: String!, password: String!): JSON
-    register(input: userInput!): JSON
 }
 
 extend type Mutation {

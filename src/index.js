@@ -1,8 +1,9 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 import server from "./graphql/server";
-import "./db";
+import vars from "./configs/envVars";
+import "./lib/db";
 
-server.listen({ port: process.env.PORT }).then(({ url }) => {
-    console.log(`Server ready at ${url}`);
+server.listen({ port: vars.app.port }).then(({ port }) => {
+    console.log(`listening on port ${port}`);
 });
